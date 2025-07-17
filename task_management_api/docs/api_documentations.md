@@ -26,7 +26,7 @@ Retrieve a list of all tasks.
   - `Content-Type: application/json`
 
 ### Request Body
-❌ No request body required.
+ No request body required.
 
 ### Example Response `200 OK`
 
@@ -40,22 +40,19 @@ Retrieve a list of all tasks.
     "status": "Pending"
   }
 ]
+```
 
-# 📋 Task Management API Documentation
+# Task Management API Documentation
 
 This API allows you to manage tasks using in-memory storage. Below are the available endpoints, request formats, and expected responses.
 
 ---
 
-## ✅ GET `/tasks/:id`
+## GET `/tasks/:id`
 
 Fetch a single task by ID.
 
 ### URL Parameters
-
-| Name | Type   | Required | Description     |
-|------|--------|----------|-----------------|
-| id   | string | ✅        | Task ID to find |
 
 ### Example Request
 
@@ -89,7 +86,7 @@ GET /tasks/1
 
 Add a new task.
 
-### 📝 Request Format
+### Request Format
 
 **Method**: POST  
 
@@ -126,7 +123,7 @@ Add a new task.
 
 Update an existing task.
 
-### 🔸 Request Body
+### Request Body
 
 ```json
 {
