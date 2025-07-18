@@ -66,7 +66,7 @@ func (t *TManager) GetTaskByID(taskID string) (models.Task,error){
 	if err != nil{
 		return models.Task{},err
 	}
-	filter := bson.D{{"_id", id}}
+	filter := bson.D{{"_id",id}}
 	taskErr := t.Collection.FindOne(context.TODO(),filter).Decode(&task)
 
 	if taskErr != nil{

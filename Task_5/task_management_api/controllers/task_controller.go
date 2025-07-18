@@ -34,16 +34,17 @@ func HandlerGetTaskByID( T *gin.Context){
 	}
 	T.JSON(http.StatusOK,task)
 }
+
 func HandlerUpdateTask(T *gin.Context){
 	id := T.Param("id")
 	var updatedTask models.Task
 	if err := T.ShouldBindJSON(&updatedTask); err != nil{
 		T.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-
+		return
 	}
 	err := TaskService.UpdateTask(id,updatedTask)
 	if err != nil{
-		T.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		T.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 		return 
 	}
 		
