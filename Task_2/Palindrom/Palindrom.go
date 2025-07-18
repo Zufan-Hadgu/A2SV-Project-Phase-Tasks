@@ -13,7 +13,7 @@ func reverse(s string) string {
     return string(letters)
 }
 
-func main() {
+func mainn() {
     var word string
     fmt.Print("Enter the string: ")
     fmt.Scanln(&word)
