@@ -9,7 +9,7 @@ import (
 )
 
 type TaskControllers struct {
-	TaskUsecase Usecases.TaskUsecase
+	TaskUsecase *Usecases.TaskUsecase
 }
 type UserControllers struct {
     UserUsecase *Usecases.UserUsecase 
@@ -54,11 +54,66 @@ func (uc *UserControllers) HandleLogin(c *gin.Context) {
 
 func (tc *TaskControllers) HandleCreateTask(c *gin.Context){
 	var task Domain.Task 
+	role,_ := c.Get("role")
+
+	if role != "admin"{
+		c.JSON(http.StatusBadRequest,gin.H{"error":"Your are not authorized user"})
+		return
+	}
 	if err:= c.ShouldBindJSON(&task); err != nil{
 		c.JSON(http.StatusBadRequest,gin.H{"message":"Invalid Request"})
 		return 
 	}
-	err := tc.TaskUsecase.AddTask()
+
+	err := tc.TaskUsecase.AddTask(c.Request.Context(),task)
+	if err != nil{
+		c.JSON(http.StatusBadRequest,gin.H{"error":err.Error()})
+		return
+	}
 
 
+}
+
+func (tc * TaskControllers) HandleUpdateTask(c *gin.Context){
+	var updatedTask Domain.Task
+	role,_ := c.Get("role")
+	taskID := c.Param("id")
+	if role != "admin"{
+		c.JSON(http.StatusBadRequest,gin.H{"error":"Your are not authorized user"})
+		return
+	}
+	if err:= c.ShouldBindJSON(&updatedTask); err != nil{
+		c.JSON(http.StatusBadRequest,gin.H{"message":"Invalid Request"})
+		return 
+	}
+	err := tc.TaskUsecase.UpdatedTask(c.Request.Context(),taskID,updatedTask)
+	if err != nil{
+		c.JSON(http.StatusBadGateway,gin.H{"error": err.Error()})
+	}
+	c.JSON(http.StatusOK,gin.H{"message":"Successfully updated"})
+}
+
+func (tc *TaskControllers) HandleDeleteTask(c *gin.Context){
+	role,_ := c.Get("role")
+	taskID := c.Param("id")
+	if role != "admin"{
+		c.JSON(http.StatusBadRequest,gin.H{"error":"Your are not authorized user"})
+		return
+	}
+	err := tc.TaskUsecase.DeleteTask(c.Request.Context(),taskID)
+	if err != nil{
+		c.JSON(http.StatusBadGateway,gin.H{"error": err.Error()})
+
+	}
+	c.JSON(http.StatusOK,gin.H{"message":"Successfully Deleted"})
+
+}
+
+func (tc *TaskControllers) HandlGetAllTasks (c *gin.Context){
+	tasks,err := tc.TaskUsecase.GetAllTask(c.Request.Context())
+	if err != nil{
+			c.JSON(http.StatusBadGateway,gin.H{"error": err.Error()})
+
+	}
+   c.JSON(http.StatusOK,tasks)
 }
