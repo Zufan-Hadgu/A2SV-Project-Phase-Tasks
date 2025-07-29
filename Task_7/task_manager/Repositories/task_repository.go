@@ -1,105 +1,105 @@
 package Repositories
 
 import (
-	"context"
 	"errors"
 	"task_manager/Domain"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"context"
 )
 
 type TaskRepoImpl struct {
 	Collection *mongo.Collection
 }
 
-func NewTaskRepoImpl(col *mongo.Collection) Domain.TaskRepository {
+func NewTaskRepoImpl(col *mongo.Collection) Domain.ITaskRepository {
 	return &TaskRepoImpl{Collection: col}
 }
 
-func BuildIDFilter (id string)(bson.M,error){
-	objID,err := primitive.ObjectIDFromHex(id)
-
-	if err != nil{
-		return nil,errors.New("invalid ID format")
+func BuildIDFilter(id string) (bson.M, error) {
+	objID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New("invalid ID format")
 	}
-	return bson.M{"_id" : objID},nil
+	return bson.M{"_id": objID}, nil
 }
 
-func (r *TaskRepoImpl) GetTaskByID(ctx context.Context, taskID string) (Domain.Task, error) {
+func (r *TaskRepoImpl) GetTaskByID(taskID string) (Domain.Task, error) {
 	var task Domain.Task
-	filter,err := BuildIDFilter(taskID)
-	if err != nil{
-		return Domain.Task{} , err
-
+	filter, err := BuildIDFilter(taskID)
+	if err != nil {
+		return Domain.Task{}, err
 	}
-	GetTaskErr := r.Collection.FindOne(ctx, filter).Decode(&task)
-	if GetTaskErr != nil{
-		return Domain.Task{},GetTaskErr
+	err = r.Collection.FindOne(context.TODO(), filter).Decode(&task)
+	if err != nil {
+		return Domain.Task{}, err
 	}
-
 	return task, nil
 }
 
-func ( r *TaskRepoImpl) AddTask(ctx context.Context,task Domain.Task) error{
-	_,err:= r.Collection.InsertOne(ctx,task)
-	if err != nil{
-		return errors.New("Error while creating task")
+func (r *TaskRepoImpl) AddTask(task Domain.Task) error {
+	_, err := r.Collection.InsertOne(context.TODO(), task)
+	if err != nil {
+		return errors.New("error while creating task")
 	}
 	return nil
 }
 
-func ( r *TaskRepoImpl) UpdateTask(ctx context.Context,taskID string,UpdatedTask Domain.Task) error{
-	filter ,err := BuildIDFilter(taskID)
-	if err != nil{
+func (r *TaskRepoImpl) UpdateTask(taskID string, UpdatedTask Domain.Task) error {
+	filter, err := BuildIDFilter(taskID)
+	if err != nil {
 		return err
-
 	}
+
 	update := bson.D{{
-		Key:"$set" , Value : bson.D{
+		Key: "$set", Value: bson.D{
 			{Key: "title", Value: UpdatedTask.Title},
 			{Key: "description", Value: UpdatedTask.Description},
 			{Key: "due_date", Value: UpdatedTask.DueDate},
 			{Key: "status", Value: UpdatedTask.Status},
-		}}}
+		},
+	}}
 
-		_,updateErr := r.Collection.UpdateOne(context.TODO(),filter,update)
-		if updateErr != nil{
-			return updateErr
-
-		}
-
-		return nil	
-}
-func ( r *TaskRepoImpl) DeleteTask(ctx context.Context,taskID string) error{
-	filter ,err := BuildIDFilter(taskID)
-	if err != nil{
+	_, err = r.Collection.UpdateOne(context.TODO(), filter, update)
+	if err != nil {
 		return err
-
 	}
-   _,delErr:= r.Collection.DeleteOne(ctx,filter)
-   if delErr != nil{
-	return delErr
-   }
-   return nil
+	return nil
 }
 
-func ( r *TaskRepoImpl) GetAllTask(ctx context.Context) ([]Domain.Task,error){
-	var ListOfTasks []Domain.Task
-	task,err := r.Collection.Find(ctx,bson.D{{}})
-	if err != nil{
-		return nil,err
+func (r *TaskRepoImpl) DeleteTask(taskID string) error {
+	filter, err := BuildIDFilter(taskID)
+	if err != nil {
+		return err
 	}
+	_, err = r.Collection.DeleteOne(context.TODO(), filter)
+	if err != nil {
+		return err
+	}
+	return nil
+}
 
-	for task.Next(ctx){
-		var Ntask Domain.Task
-		if err := task.Decode(&Ntask); err != nil{
-			return nil,err
+func (r *TaskRepoImpl) GetAllTask() ([]Domain.Task, error) {
+	var tasks []Domain.Task
+	cursor, err := r.Collection.Find(context.TODO(), bson.D{{}})
+	if err != nil {
+		return nil, err
+	}
+	defer cursor.Close(context.TODO())
+
+	for cursor.Next(context.TODO()) {
+		var task Domain.Task
+		if err := cursor.Decode(&task); err != nil {
+			return nil, err
 		}
-		ListOfTasks = append(ListOfTasks,Ntask)
-
+		tasks = append(tasks, task)
 	}
-	return ListOfTasks,nil
 
+	if err := cursor.Err(); err != nil {
+		return nil, err
+	}
+
+	return tasks, nil
 }
