@@ -11,7 +11,7 @@ import (
 )
 
 type TaskRepoImpl struct {
-	Collection CollectionInterface
+	Collection *mongo.Collection
 }
 
 func NewTaskRepoImpl(col *mongo.Collection) Domain.ITaskRepository {
